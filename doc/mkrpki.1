@@ -1,0 +1,457 @@
+.TH "mkrpki" "1" "June 17, 2019" "NLnet Labs" "mkrpki 0.5.0
+.\"
+.\" mkrpki.1 -- Make RPKI objects
+.\"
+.\" Copyright (c) 2019, NLnet Labs.
+.\"
+.\"
+.SH "NAME"
+.B mkrpki
+\- crates RPKI objects
+.SH "SYNOPSIS"
+.B mkrpki
+<command>
+[<args>]
+
+.SH "DESCRIPTION"
+mkrpki is a command line tool that allows the manual creating of RPKI objects.
+
+.SH COMMANDS
+
+A subcommand is available for each type of RPKI objects. The following
+commands are available. They are described in detail below.
+
+.SS key
+Creates a pair of private and public key to be used by a certificate
+authority.
+
+.SS ta
+Creates a trust anchor certificate and, optionally, a trust anchor locator
+for it.
+
+.SS cer
+Creates the CA certificate of a certificate authority.
+
+.SS crl
+Creates a certificate revocation list.
+
+.SS roa
+Creates a Route Origin Authorization (ROA).
+
+.SS mft
+Creates a manifest.
+
+
+.SH KEY PAIRS
+.B mkrpki
+.B key
+<options>
+
+.P
+Creates a new private key with the correct algorithm and key length for RPKI
+and stores the private and the public key in separate files. Both are stored
+as raw DER encoded objects.
+.TP
+.BI \-\-private\fR\  path
+Path to the file to store the private key in.
+.TP
+.BI \-\-public\fR\   path
+Path to the file to store the public key in.
+
+
+.SH TRUST ANCHOR CERTIFICATES
+.B mkrpki
+.B ta
+<options>
+
+.P
+Creates a new trust anchor certificate and a accompanying trust anchor
+locator. A trust anchor certificate is a self-signed certificate.
+
+.TP
+.BI \-\-key\fR\  path
+Path to the private key file for the trust anchor key. This key serves both
+as the subject public key of the certificate as well as the key the
+certificate will be signed with.
+
+.TP
+.BI \-\-serial\fR\  serial-number
+The serial number of the certificate. A random, positive integer.
+
+.TP
+[\fB\-\-not\-before\fR\ \fIdate-and-time\fR]
+The certificate is not valid before this time. Defaults to the current time.
+
+.TP
+\fB\-\-not\-after\fR\ \fIdate-and-time\fR|\fB\-\-days number-of-days
+The certificate is not valid after this time. The
+.B --not-after
+option provides a specific date. Alternatively,
+.B --days
+provides the number of days after
+.B --not-before
+when the certificate will expire.
+
+.TP
+.BR --ca-repository \ \fIuri
+The rsync URI of the location of the certificate’s CA repository. This is the
+directory where the CRL, the manifest, and any additional material are
+located.
+
+.TP
+.BR --rpki-manifest \ \fIuri
+The rsync URI of the location of the certificate’s manifest. This should be
+inside the
+.B --ca-repository
+directory.
+
+.TP
+[\fB\-\-rpki\-notify\fR\ \fIuri\fR]
+The HTTPS URI of the RRDP notification file. If it is missing, RRDP is not
+supported.
+
+.TP
+[\fB--v4\fR \fIaddress-block\fR\ [\fIaddress-block\fR\ [...]]]
+The IPv4 resources of the certificate. Each address block can be given as an
+IPv4 prefix in "slash notation", i.e., an IPv4 address followed by a slash
+followed by the number of bits in the network prefix, or as a sequence of two
+addresses delimited by a hyphen.
+
+.TP
+[\fB--v6\fR \fIaddress-block\fR\ [\fIaddress-block\fR\ [...]]]
+The IPv6 resources of the certificate. Each address block can be given as an
+IPv6 prefix in "slash notation", i.e., an IPv6 address followed by a slash
+followed by the number of bits in the network prefix, or as a sequence of two
+addresses delimited by a hyphen.
+
+.TP
+[\fB--as\fR \fIas-block\fR\ [\fIas-block\fR\ [...]]]
+The AS resources of the certificate. Each AS block is given as a pair of the
+smallest and largest included AS delimted by a hyphen.
+
+.TP
+\fB--tal-rsync-uri\fR \fIuri
+The rsync URI to be included in the trust anchor locator, i.e., the location
+where this trust anchor certificate will be published.
+
+.TP
+[\fB--tal-https-uri\fR \fIuri\fR]
+The HTTPS URI to be included in the trust anchor locator. This is only
+necessary if the trust anchor certificate supports RRDP.
+
+.TP
+\fB--output\fR \fIpath
+The path to the file the created trust anchor certificate should be placed
+into. Should have the extension
+.BR .cer .
+
+.TP
+\fB--output-tal\fR \fIpath
+The path to the file the created trust anchor locator should be placed into.
+Should have the extension
+.BR .tal .
+
+
+.SH CA CERTIFICATES
+.B mkrpki
+.B cer 
+<options>
+
+Creates a new CA certificate for the RPKI.
+
+.TP
+\fB--issuer-key\fR \fIpath
+Path to the private key file of the certificate’s issuer. This is the key
+the certificate will be signed with.
+
+.TP
+\fB--subject-key\fR \fIpath
+Path to the
+.I public
+key of the subject of this certificate.
+
+.TP
+.BI \-\-serial\fR\  serial-number
+The serial number of the certificate. A random, positive integer.
+
+.TP
+[\fB\-\-not\-before\fR\ \fIdate-and-time\fR]
+The certificate is not valid before this time. Defaults to the current time.
+
+.TP
+\fB\-\-not\-after\fR\ \fIdate-and-time\fR|\fB\-\-days number-of-days
+The certificate is not valid after this time. The
+.B --not-after
+option provides a specific date. Alternatively,
+.B --days
+provides the number of days after
+.B --not-before
+when the certificate will expire.
+
+.TP
+\fB--trim-resources
+If present, certificates issued by CA will have their resources trimmed to
+be covered by the CA certificate instead of being rejected if they carry
+excessive resources. Note that this isn't widely supported yet.
+
+.TP
+\fB--crl\fR \fIuri
+The rsync URI of the location of the certificate revocation list of the
+issuing CA. It should be located in the CA repository of the issuing CA.
+
+.TP
+\fB--ca-issuer\fR \fIuri
+The rsync URI of the location of the certificate of the issuing CA.
+
+.TP
+.BR --ca-repository \ \fIuri
+The rsync URI of the location of this new certificate’s CA repository. This
+is the directory where the CRL, the manifest, and any additional material
+created by this new CA are located.
+
+.TP
+.BR --rpki-manifest \ \fIuri
+The rsync URI of the location of this new certificate’s manifest. This should
+be inside the
+.B --ca-repository
+directory.
+
+.TP
+[\fB\-\-rpki\-notify\fR\ \fIuri\fR]
+The HTTPS URI of the RRDP notification file. If it is missing, RRDP is not
+supported.
+
+.TP
+[\fB--inherit-v4\fR|\fB--v4\fR \fIaddress-block\fR\ [\fIaddress-block\fR\ [...]]]
+The IPv4 resources of the certificate.
+.IP
+If
+.B --inherit-v4
+is given, the IPv4 resources will be inherited from the issuer certificate.
+Otherwise, a number of IPv4 address blocks can be provided via
+.BR --v4 .
+Each address block is given as an
+IPv4 prefix in "slash notation", i.e., an IPv4 address followed by a slash
+followed by the number of bits in the network prefix, or as a sequence of two
+addresses delimited by a hyphen.
+
+.TP
+[\fB--inherit-v6\fR|\fB--v6\fR \fIaddress-block\fR\ [\fIaddress-block\fR\ [...]]]
+The IPv6 resources of the certificate.
+.IP
+If
+.B --inherit-v6
+is given, the IPv6 resources will be inherited from the issuer certificate.
+Otherwise, a number of IPv6 address blocks can be provided via
+.BR --v6 .
+Each address block is given as an
+IPv6 prefix in "slash notation", i.e., an IPv6 address followed by a slash
+followed by the number of bits in the network prefix, or as a sequence of two
+addresses delimited by a hyphen.
+
+.TP
+[\fB--inherit-as\fR|\fB--as\fR \fIas-block\fR\ [\fIas-block\fR\ [...]]]
+The AS resources of the certificate.
+.IP
+If
+.B --inherit-as
+is given, the AS resources will be inherited from the issuer certificate.
+Otherwise, a number of AS blocks can be provided via
+.BR --as .
+Each AS block is given as a pair of the
+smallest and largest included AS delimted by a hyphen.
+
+.TP
+\fB--output\fR \fIpath
+The path to the file the created trust anchor certificate should be placed
+into. This file should have the extension
+.BR .cer .
+
+
+.SH CRLS
+.B mkrpki
+.B crl
+<options>
+
+.P
+Creates a new certificate revocation list for a CA.
+
+.TP
+\fB--issuer-key\fR \fIpath
+Path to the private key of the CA that issues this CRL. The key will be used
+to sign the CRL.
+
+.TP
+[\fB--this-update\fR \fIdate-time\fR]
+The date and time this update to the CA's CRL was issued at. If missing,
+defaults to the current time.
+
+.TP
+\fB--next-update\fR \fIdate-time\fR|\fB--next-days\fR \fIdays
+The date and time the next update to the CRL should be expected. Can either be
+given as a date and time via the
+.B --next-update
+option or as the number of days after this update through
+.BR --next-days .
+
+.TP
+\fB--crl\fR \fInumber
+The sequence number of this CRL. Sequence numbers are positive integers that
+are monotonically increasing with the CRL being updated over time.
+
+.TP
+\fB--cert\fR \fIserial\fR[\fI@date-time\fR] [\fIserial\fR[\fI@date-time\fR] [...]]
+The list of certificates that have been revoked. Each certificate is
+identified by its serial number. Optionally, the time and date of its
+revocation can be given.
+
+.TP
+\fB--output\fR \fIpath
+The path to the file the CRL is to be placed into. The file name should have
+an extension of
+.BR .crl .
+The CRL should be located in the CA repository of its issuing certificate.
+
+
+.SH ROUTE ORIGIN AUTHORIZATIONS
+.B mkrpki
+.B roa
+<options>
+
+.P
+Creates a new Route Origin Authorization (ROA). Creates a one-time use key pair
+with which it signs the ROA and creates an EE certificate for this key pair.
+Both of which will be included in a signed object that is being written to
+a file.
+
+.TP
+\fB--issuer-key\fR \fIpath
+Path to the private key of the CA that issues this CRL. The key will be used
+to sign the CRL.
+
+\fB--serial\fR \fIserial-number
+The serial number of the EE certificate with which the ROA will be signed.
+
+.TP
+[\fB\-\-not\-before\fR\ \fIdate-and-time\fR]
+The EE certificate and therefore the ROA are not valid before this time.
+Defaults to the current time.
+
+.TP
+\fB\-\-not\-after\fR\ \fIdate-and-time\fR|\fB\-\-days number-of-days
+The EE certificate and ROA are not valid after this time. The
+.B --not-after
+option provides a specific date. Alternatively,
+.B --days
+provides the number of days after
+.B --not-before
+when the certificate will expire.
+
+.TP
+\fB--crl\fR \fIuri
+The rsync URI of the location of the certificate revocation list of the
+issuing CA. It should be located in the CA repository of the issuing CA.
+
+.TP
+\fB--ca-issuer\fR \fIuri
+The rsync URI of the location of the certificate of the issuing CA.
+
+.TP
+\fB--signed-object\fR \fIuri
+The rsync URI of the location of the produced ROA.
+
+.TP
+\fB--prefixes\fR \fIprefix\fR [\fiprefix\fR [...]]
+The prefixes for which routes are authorized. Prefixes are to be given in
+"slash notation," i.e., an IP address followed by the number of bits in the
+network prefix delimited by a slash.
+
+.TP
+\fB--asn\fR \fIasn
+The AS number of the autonomous system that is being authorized to origin
+the
+.BR --prefixes .
+
+.TP
+\fB--output\fR \fIpath
+The path to the file the ROA should be written to. The path should have an
+extension of
+.BR .roa .
+
+
+.SH MANIFESTS
+.B mkrpki
+.B mft
+<options>
+
+.P
+Creates an RPKI manifest. The manifest will be signed using a one-time use
+key pair and will contain an EE certificate for that pair.
+
+.TP
+\fB--issuer-key\fR \fIpath
+Path to the private key of the CA that issues this CRL. The key will be used
+to sign the CRL.
+
+\fB--serial\fR \fIserial-number
+The serial number of the EE certificate with which the ROA will be signed.
+
+.TP
+[\fB\-\-not\-before\fR\ \fIdate-and-time\fR]
+The EE certificate and therefore the ROA are not valid before this time.
+Defaults to the current time.
+
+.TP
+\fB\-\-not\-after\fR\ \fIdate-and-time\fR|\fB\-\-days number-of-days
+The EE certificate and ROA are not valid after this time. The
+.B --not-after
+option provides a specific date. Alternatively,
+.B --days
+provides the number of days after
+.B --not-before
+when the certificate will expire.
+
+.TP
+\fB--crl\fR \fIuri
+The rsync URI of the location of the certificate revocation list of the
+issuing CA. It should be located in the CA repository of the issuing CA.
+
+.TP
+\fB--ca-issuer\fR \fIuri
+The rsync URI of the location of the certificate of the issuing CA.
+
+.TP
+\fB--signed-object\fR \fIuri
+The rsync URI of the location of the produced ROA.
+
+.TP
+\fB--number\fR \fInumber
+The sequence number of the manifest. Sequence numbers are positive integers
+that are increased with each update of the manifest.
+
+.TP
+[\fB--this-update\fR \fIdate-time\fR]
+The date and time this update to the manifest was issued at. If missing,
+defaults to the current time.
+
+.TP
+\fB--next-update\fR \fIdate-time\fR|\fB--next-days\fR \fIdays
+The date and time the next update to the manifest should be expected. Can
+either be given as a date and time via the
+.B --next-update
+option or as the number of days after this update through
+.BR --next-days .
+
+.TP
+\fB--files\fR \fIpath\fR [\fIpath\fR [...]]
+The paths to the files to be included in the manifest. Only the file name
+portion of the path will be used as the file name. I.e., you can include
+full paths including intermediary directories but only the names will be
+used. The files must exist as their digest needs to be calculated.
+
+.TP
+\fB--output\fR \fIpath
+The path to the file the manifest should be written to. The path should have
+an extension of
+.BR .mft .
+

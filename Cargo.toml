@@ -1,0 +1,22 @@
+[package]
+name = "mkrpki"
+version = "0.1.0"
+edition = "2018"
+authors = ["The NLnet Labs RPKI Team <rpki@nlnetlabs.nl>"]
+description = "A command line tool to manually generate RPKI objects."
+repository = "https://github.com/NLnetLabs/mkrpki"
+keywords = ["rpki", "routing-security"]
+license = "BSD-3-Clause"
+
+[dependencies]
+base64    = "^0.10.1"
+chrono    = "^0.4"
+openssl   = "^0.10"
+rpki      = { version = "0.5.0", features = [ "softkeys" ] }
+structopt = "^0.2.16"
+unwrap    = "^1.2.1"
+
+[patch.crates-io]
+bcder = { git="https://github.com/NLnetLabs/bcder.git" }
+rpki = { git="https://github.com/NLnetLabs/rpki-rs.git" }
+
