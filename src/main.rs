@@ -8,15 +8,15 @@ use std::net::IpAddr;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use chrono::Duration;
-use rpki::cert::{KeyUsage, Overclaim, TbsCert};
-use rpki::crl::{TbsCertList, CrlEntry};
-use rpki::crypto::{DigestAlgorithm, PublicKey, SignatureAlgorithm, Signer};
+use rpki::crypto::{DigestAlgorithm, PublicKey, RpkiSignatureAlgorithm, Signer};
 use rpki::crypto::softsigner::{OpenSslSigner, KeyId};
-use rpki::manifest::{FileAndHash, ManifestContent};
-use rpki::roa::{RoaBuilder, RoaIpAddress};
-use rpki::resources::{AsBlock, AsId, IpBlock};
-use rpki::sigobj::SignedObjectBuilder;
-use rpki::x509::{Serial, Time, Validity};
+use rpki::repository::cert::{KeyUsage, Overclaim, TbsCert};
+use rpki::repository::crl::{TbsCertList, CrlEntry};
+use rpki::repository::manifest::{FileAndHash, ManifestContent};
+use rpki::repository::roa::{RoaBuilder, RoaIpAddress};
+use rpki::repository::resources::{AsBlock, Asn, IpBlock};
+use rpki::repository::sigobj::SignedObjectBuilder;
+use rpki::repository::x509::{Serial, Time, Validity};
 use rpki::uri;
 use structopt::StructOpt;
 use unwrap::unwrap;
@@ -476,7 +476,7 @@ impl Crl {
         };
 
         let crl = TbsCertList::new(
-            SignatureAlgorithm::default(),
+            RpkiSignatureAlgorithm::default(),
             issuer_pub.to_subject_name(),
             this_update,
             next_update,
@@ -531,7 +531,7 @@ struct Roa {
 
     /// The AS number for the ROA.
     #[structopt(long="asn")]
-    asn: AsId,
+    asn: Asn,
 
     /// The IP prefixes for the ROA.
     #[structopt(long="prefixes")]
@@ -776,7 +776,7 @@ impl Mft {
 //------------ Helpers -------------------------------------------------------
 
 fn create_signer(issuer_key: &Path) -> Result<(OpenSslSigner, KeyId), ()> {
-    let mut signer = OpenSslSigner::new();
+    let signer = OpenSslSigner::new();
     let der = load_file(issuer_key)?;
     let key = match signer.key_from_der(&der) {
         Ok(key) => key,

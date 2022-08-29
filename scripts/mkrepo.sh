@@ -54,8 +54,7 @@ $MKRPKI cer \
 	--ca-issuer rsync://rpki.example.com/repo/ta.cer \
 	--ca-repository rsync://rpki.example.com/repo/isp/ \
 	--rpki-manifest rsync://rpki.example.com/repo/isp/isp.mft \
-	--v4 192.0.2.0/24 \
-	--v6 2001:db8::/32 \
+	--v4 192.0.2.0/124 \
 	--as AS64494 \
 	--output test-repo/repository/rpki.example.com/repo/isp.cer
 
@@ -91,7 +90,7 @@ $MKRPKI roa \
 	--ca-issuer rsync://rpki.example.com/repo/isp.cer \
 	--signed-object rsync://rpki.example.com/repo/isp/isp.roa \
 	--asn AS64494 \
-	--prefixes 192.0.2.0/24 2001:db8::/32-40 \
+	--prefixes 192.0.2.0/24-2 \
 	--output test-repo/repository/rpki.example.com/repo/isp/isp.roa
 
 $MKRPKI mft \

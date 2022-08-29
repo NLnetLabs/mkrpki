@@ -12,11 +12,7 @@ license = "BSD-3-Clause"
 base64    = "^0.10.1"
 chrono    = "^0.4"
 openssl   = "^0.10"
-rpki      = { version = "0.5.0", features = [ "softkeys" ] }
+rpki      = { version = "0.15", features = [ "repository", "softkeys" ] }
 structopt = "^0.2.16"
 unwrap    = "^1.2.1"
-
-[patch.crates-io]
-bcder = { git="https://github.com/NLnetLabs/bcder.git" }
-rpki = { git="https://github.com/NLnetLabs/rpki-rs.git" }
 
