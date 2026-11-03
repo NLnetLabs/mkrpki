@@ -1,6 +1,6 @@
 [package]
 name = "mkrpki"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2018"
 authors = ["The NLnet Labs RPKI Team <rpki@nlnetlabs.nl>"]
 description = "A command line tool to manually generate RPKI objects."
@@ -9,10 +9,10 @@ keywords = ["rpki", "routing-security"]
 license = "BSD-3-Clause"
 
 [dependencies]
+aws-lc-rs = "1.16.2" 
 base64    = "^0.10.1"
 chrono    = "^0.4"
-openssl   = "^0.10"
-rpki      = { version = "0.15", features = [ "repository", "softkeys" ] }
+rpki      = { version = "0.20.1", features = [ "repository", "softkeys" ] }
 structopt = "^0.2.16"
 unwrap    = "^1.2.1"
 

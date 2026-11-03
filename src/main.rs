@@ -7,9 +7,10 @@ use std::fs::File;
 use std::net::IpAddr;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
+use aws_lc_rs::{encoding, rsa, signature};
 use chrono::Duration;
 use rpki::crypto::{DigestAlgorithm, PublicKey, RpkiSignatureAlgorithm, Signer};
-use rpki::crypto::softsigner::{OpenSslSigner, KeyId};
+use rpki::crypto::softsigner::{SoftSigner, KeyId};
 use rpki::repository::cert::{KeyUsage, Overclaim, TbsCert};
 use rpki::repository::crl::{TbsCertList, CrlEntry};
 use rpki::repository::manifest::{FileAndHash, ManifestContent};
@@ -91,7 +92,7 @@ struct Key {
 
 impl Key {
     pub fn run(self) -> Result<(), ()> {
-        let key = match openssl::rsa::Rsa::generate(2048) {
+        let key = match rsa::KeyPair::generate(rsa::KeySize::Rsa2048) {
             Ok(key) => key,
             Err(err) => {
                 eprintln!("Failed to generate key: {}", err);
@@ -106,14 +107,14 @@ impl Key {
                 return Err(())
             }
         };
-        let buf = match key.private_key_to_der() {
+        let buf = match encoding::AsDer::as_der(&key) {
             Ok(buf) => buf,
             Err(err) => {
                 eprintln!("Failed to extract private key: {}", err);
                 return Err(())
             }
         };
-        if let Err(err) = file.write_all(&buf) {
+        if let Err(err) = file.write_all(buf.as_ref()) {
             eprintln!("Failed to write to private key file: {}", err);
             return Err(())
         }
@@ -125,14 +126,16 @@ impl Key {
                 return Err(())
             }
         };
-        let buf = match key.public_key_to_der() {
+        let buf = match encoding::AsDer::as_der(
+            signature::KeyPair::public_key(&key)
+        ) {
             Ok(buf) => buf,
             Err(err) => {
                 eprintln!("Failed to extract public key: {}", err);
                 return Err(())
             }
         };
-        if let Err(err) = file.write_all(&buf) {
+        if let Err(err) = file.write_all(buf.as_ref()) {
             eprintln!("Failed to write to public key file: {}", err);
             return Err(())
         }
@@ -775,10 +778,10 @@ impl Mft {
 
 //------------ Helpers -------------------------------------------------------
 
-fn create_signer(issuer_key: &Path) -> Result<(OpenSslSigner, KeyId), ()> {
-    let signer = OpenSslSigner::new();
+fn create_signer(issuer_key: &Path) -> Result<(SoftSigner, KeyId), ()> {
+    let signer = SoftSigner::new();
     let der = load_file(issuer_key)?;
-    let key = match signer.key_from_der(&der) {
+    let key = match signer.key_from_pem(&der) {
         Ok(key) => key,
         Err(err) => {
             eprintln!(
